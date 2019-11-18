@@ -22,7 +22,7 @@ app.use('/register', require('./routes/register.js'));
 app.use('/verify', require('./routes/verify.js'));
 app.use('/wait', require('./routes/wait.js'));
 app.use('/contacts', require('./routes/contacts.js'));
-app.use('/weather', require('./routes/weather.js'));
+//app.use('/weather', require('./routes/weather.js'));
 app.use('/messaging', middleware.checkToken, require('./routes/messaging.js'));
 
 /*
