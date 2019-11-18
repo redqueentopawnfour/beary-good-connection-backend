@@ -40,7 +40,7 @@ app.get("/", (req, res) => {
     res.end(); //end the response
 });
 
-app.get('/', (req, res) => { 
+app.get('/weather', (req, res) => { 
   const options = new URL('https://api.openweathermap.org/data/2.5/weather?q=Seattle,us&APPID=256b3fac9d8ec8ce35e6be9487360e9c');
   //const options = new URL('https://api.weatherbit.io/v2.0/current?city=Seattle,WA&key=f991b0a6c72941ecb4103f79eee8a9f2')
   http.get(options, (resp) => {
@@ -56,7 +56,7 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get("/params", (req, res) => { 
+app.get("/weatherParams", (req, res) => { 
   const {lat, lon} = req.query;
   //const options = new URL('https://api.openweathermap.org/data/2.5/weather?lat={37.39}&lon={122.33}&APPID=256b3fac9d8ec8ce35e6be9487360e9c');
   const options = new URL(`https://api.weatherbit.io/v2.0/current?lat=${lat}&lon=${lon}&key=f991b0a6c72941ecb4103f79eee8a9f2`);
