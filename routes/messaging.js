@@ -31,6 +31,7 @@ router.post("/send", (req, res) => {
     let insert = `INSERT INTO Messages (chatId, Message, MemberId) SELECT $1, $2, MemberId FROM Members WHERE Email=$3`
     db.none(insert, [chatId, message, email])
     .then(() => {
+        console.log("Message error in message send");
         let selectTokens = `SELECT members.pushtoken
         FROM members
         JOIN chatmembers
@@ -52,6 +53,7 @@ router.post("/send", (req, res) => {
             });
         })
     }).catch((err) => {
+        console.log("Message error in message insert");
         res.send({
             success: false,
             error: err,
