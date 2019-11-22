@@ -92,4 +92,5 @@ router.post("/getAll", (req, res) => {
         })
     });
 });
+
 module.exports = router;
