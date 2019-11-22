@@ -16,30 +16,72 @@ router.post('/', (req, res) => {
     res.type("application/json");
 
     var email = req.body['email'];
-    var memberId;
+    var memberId_a;
     console.log(email);
 
     if(email) {
         db.one('SELECT memberid FROM members WHERE email = $1', [email])
         .then(row => { 
-            console.log(row);
-            memberId = row['memberid'];
-
-            console.log(memberId);
-            if (memberId) {
-                db.manyOrNone('SELECT m.firstname, m.lastname, m.username, m.email, m.usericon, m.isVerified as "emailverified", c.requestnumber, c.isverified as "contactverified" ' + 
-                'from contacts c join members m on m.memberid = c.memberid_b where c.memberid_a = $1', [memberId])
+            memberId_a = row['memberid'];
+            console.log("Member ID: " + memberId_a);
+            
+            if (memberId_a) {
+                db.manyOrNone('SELECT m.memberid, m.firstname, m.lastname, m.username, m.email, m.usericon, m.isVerified as "emailverified", c.requestnumber, c.isverified as "contactverified" ' + 
+                "from contacts c join members m on m.memberid = c.memberid_b where c.memberid_a = $1", [memberId_a])
                 .then(rows => { 
-                    console.log(rows);
-                    
-                    rows.forEach(row => { 
-                        console.log(row); 
-                      }); 
+                    var returnContacts = [];
+                    var count = 0;
+                    var numContacts = rows.length;
 
-                      res.send({
-                        success: true,
-                        message: rows
-                    });
+                    rows.forEach(row => { 
+                        var memberId_b = row['memberid'];
+                        var firstname = row['firstname'];
+                        var lastname = row['lastname'];
+                        var username = row['username'];
+                        var email = row['email'];
+                        var usericon = row['usericon'];
+                        var emailverified = row['emailverified'];
+                        var requestnumber = row['requestnumber'];
+                        var contactverified = row['contactverified'];
+
+                        db.manyOrNone("select * from chats ch join chatmembers chm on chm.chatid = ch.chatid " +
+                        "join chatmembers chm2 on chm2.chatid = ch.chatid where ch.name = $1 and chm.memberid = $2 and chm2.memberid = $3", ['primary', memberId_b, memberId_a])
+                        .then(rows => { 
+                            var chatId = 0;                     // default to 0
+                            console.log("Chat ID: " + chatId);
+
+                            rows.forEach(row => { 
+                                chatId = row['chatid'];
+                            });
+
+                            var contact = {
+                                firstname: firstname
+                                , lastname: lastname
+                                , username: username
+                                , email: email
+                                , usericon: usericon
+                                , emailverified: emailverified
+                                , requestnumber: requestnumber
+                                , contactverified: contactverified
+                                , chatId: chatId
+                            }
+                            returnContacts.push(contact);    // push to array of contacts
+                            count = count + 1;
+
+                            if (count == numContacts) {
+                                res.send({
+                                    success: true,
+                                    message: returnContacts
+                                });
+                            }
+                        })
+                        .catch((err) => {
+                            res.send({
+                                success: false,
+                                message: 'no chat id found'
+                            });
+                        });
+                    }); 
                 })
                 .catch((err) => {
                     res.send({
@@ -108,8 +150,9 @@ router.post('/add', (req, res) => {
                             .then(() => {
                                 db.one('SELECT Pushtoken FROM MEMBERS WHERE memberid = $1', memberid_requested)
                                 .then(row => {
-                                        console.log("Pushtoken of requested person: " + row['pushtoken']);
-                                       // msg_functions.sendToIndividual(rows['pushtoken'], message, email);
+                                    console.log("Pushtoken of requested person: " + row['pushtoken']);
+                                    require('../utilities/utils').messaging
+                                    .sendToIndividual(row['pushtoken'], "testing topic all", "Testing");
                                     res.send({
                                         success: true
                                         , message: "contact successfully added"
@@ -215,13 +258,58 @@ router.post('/accept', (req, res) => {
             console.log("memberid_sender requested: " + memberid_requested);
             
             if (memberid_sender && memberid_requested) {
-                
+                              
                 db.none("update contacts set isverified = true where (memberid_a = $1 and memberid_b = $2) or (memberid_b = $1 and memberid_a = $2)", [memberid_sender, memberid_requested])
                 .then(() => { 
                     console.log("Contact added");
-                    res.send({
-                        success: true,
-                        error: "Contact added." 
+                    db.none("Insert into Chats(name) values ($1)", "primary")    // Create the chat on friend request accept
+                    .then(() => { 
+                        console.log("Chat created");
+    
+                        db.one("SELECT MAX(chatid) from Chats")        // get Chat ID by returning last highest chat ID from chat table
+                        .then(row => { 
+                            console.log(row);
+                            var chatId = row['max'];
+        
+                            db.none("Insert into ChatMembers values ($1, $2)", [chatId, memberid_sender])        // insert first member
+                            .then(() => { 
+                                console.log("first member has joined chat");
+            
+                                db.none("Insert into ChatMembers values ($1, $2)", [chatId, memberid_requested])        // insert second member
+                                .then(() => { 
+                                    console.log("Second member has joined chat");
+                
+                                    res.send({
+                                        success: true,
+                                        message: chatId
+                                    });
+                                })
+                                .catch((err) => {
+                                    res.send({
+                                        success: false,
+                                        error: "Insert member sender failed"
+                                    });
+                                });
+                            })
+                            .catch((err) => {
+                                res.send({
+                                    success: false,
+                                    error: "Insert member sender failed"
+                                });
+                            });
+                        })
+                        .catch((err) => {
+                            res.send({
+                                success: false,
+                                error: "No ChatId found"
+                            });
+                        });
+                    })
+                    .catch((err) => {
+                        res.send({
+                            success: false,
+                            error: "Chat creation failed"
+                        });
                     });
                 })
                 .catch((err) => {
@@ -301,68 +389,6 @@ router.post('/reject', (req, res) => {
     });
 });
 
-// router.post('/isverified', (req, res) => {
-//     res.type("application/json");
-
-//     var email1 = req.body['email1'];
-//     var email2 = req.body['email2'];
-//     console.log(email1);
-//     console.log(email2);
-
-//     var memberid_a;
-//     var memberid_b;
-//     var isverified = false;
-
-//     if(email1) {
-//         db.one('SELECT memberid from members where email = $1', email1)
-//         .then(row => { 
-//             memberid_a = row['memberid'];
-//             console.log(memberid_a);
-//             if (email2) {
-//                 db.one('SELECT memberid from members where email = $1', email2)
-//                 .then(row => { 
-//                     memberid_b = row['memberid'];
-//                     console.log(memberid_b);
-    
-//                     if (memberid_a && memberid_b) {
-//                         db.one('SELECT isverified from contacts where (memberid_a = $1 and memberid_b = $2) or (memberid_a = $2 and memberid_b = $1) ', [memberid_a, memberid_b])
-//                         .then(row => { 
-//                             isverified = row['isverified'];
-//                             console.log(isverified);
-//                             res.send({
-//                                 success: true,
-//                                 isverified: isverified
-//                             });
-//                         })
-//                         .catch((err) => {
-//                             res.send({
-//                                 success: false,
-//                                 message: 'no isverified found'
-//                             });
-//                         });
-//                     }
-//                 })
-//                 .catch((err) => {
-//                     res.send({
-//                         success: false,
-//                         message: 'no member id 2 found'
-//                     });
-//                 });
-//             }
-//         })
-//         .catch((err) => {
-//             res.send({
-//                 success: false,
-//                 message: 'no member id 1 found'
-//             });
-//         });
-//     } else {
-//         res.send({
-//             success: false,
-//             message: 'no email found'
-//         });
-//     }
-// });
 
 
 module.exports = router;
