@@ -25,11 +25,11 @@ router.post('/', (req, res) => {
     var usericon;
 
     if(first && last && username && email && password) {
-        var iconNumber = getRandomIntInclusive(1, 5);
-        var usericon = "bearicon" + iconNumber;
+        var iconNumber = getRandomIntInclusive(1, 10);
+        var usericon = "ic_usericon" + iconNumber;
         
-        if (email == "cfb3@uw.edu") {    // Red herring for Charles registering
-            usericon = "fishicon1";
+        if (email == "cfb3@uw.edu") {    // Red herring for Charles registering- usericon10 is the fish
+            usericon = "ic_usericon10";  
         }
 
         console.log(usericon);
