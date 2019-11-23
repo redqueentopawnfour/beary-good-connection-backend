@@ -12,6 +12,7 @@ router.use(bodyParser.json());
 
 let msg_functions = require('../utilities/utils').messaging;
 
+
 //send a message to all users "in" the chat session with chatId
 router.post("/send", (req, res) => {
     let username = req.body['username'];
@@ -26,40 +27,51 @@ router.post("/send", (req, res) => {
         });
         return;
     }
-    
-    //add the message to the database
-    let insert = `INSERT INTO Messages (chatId, Message, MemberId) SELECT $1, $2, MemberId FROM Members WHERE Email=$3`
-    db.none(insert, [chatId, message, email])
-    .then(() => {
-        console.log("Message error in message send");
-        let selectTokens = `SELECT members.pushtoken
-        FROM members
-        JOIN chatmembers
-        on members.memberid = chatmembers.memberid
-        WHERE chatmembers.chatid=$1`
-        //send a notification of this message to ALL members with registered tokens
-        db.manyOrNone(selectTokens, chatId)
-        .then(rows => {
-            rows.forEach(element => {
-                msg_functions.sendToIndividual(element['pushtoken'], message, email);
-            });
-            res.send({
-                success: true
-            });
-        }).catch(err => {
+    let verify = `SELECT * FROM Chatmembers 
+    JOIN Members
+    ON Members.MemberId = Chatmembers.MemberId
+    WHERE Members.email=$1 AND Chatmembers.chatId=$2`
+    db.one(verify, [email, chatId]).then(row => {
+        console.log("member" + row['memberid'] + "is a member of this chat!");
+        //add the message to the database
+        let insert = `INSERT INTO Messages (chatId, Message, MemberId) SELECT $1, $2, MemberId FROM Members WHERE Email=$3`
+        db.none(insert, [chatId, message, email])
+        .then(() => {
+            let selectTokens = `SELECT members.pushtoken
+            FROM members
+            JOIN chatmembers
+            on members.memberid = chatmembers.memberid
+            WHERE chatmembers.chatid=$1`
+            //send a notification of this message to ALL members with registered tokens
+            db.manyOrNone(selectTokens, chatId)
+            .then(rows => {
+                rows.forEach(element => {
+                    msg_functions.sendToIndividual(element['pushtoken'], message, email);
+                });
+                res.send({
+                    success: true
+                });
+            }).catch(err => {
+                res.send({
+                    success: false,
+                    error: err
+                });
+            })
+        }).catch((err) => {
             res.send({
                 success: false,
-                error: err
+                error: err,
             });
-        })
-    }).catch((err) => {
-        console.log("Message error in message insert");
-        res.send({
-            success: false,
-            error: err,
         });
+    }).catch(err => {
+        res.send( {
+            success: false,
+            message: "this member is not a member of this chat!"
+        })
     });
+   
 });
+
 
 router.post("/getAll", (req, res) => {
     let chatId = req.body['chatId'];
