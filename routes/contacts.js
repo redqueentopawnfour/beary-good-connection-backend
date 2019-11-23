@@ -27,7 +27,7 @@ router.post('/', (req, res) => {
             
             if (memberId_a) {
                 db.manyOrNone('SELECT m.memberid, m.firstname, m.lastname, m.username, m.email, m.usericon, m.isVerified as "emailverified", c.requestnumber, c.isverified as "contactverified" ' + 
-                "from contacts c join members m on m.memberid = c.memberid_b where c.memberid_a = $1", [memberId_a])
+                "from contacts c join members m on m.memberid = c.memberid_b where c.memberid_a = $1 order by m.username asc", [memberId_a])
                 .then(rows => { 
                     var returnContacts = [];
                     var count = 0;
@@ -48,11 +48,12 @@ router.post('/', (req, res) => {
                         "join chatmembers chm2 on chm2.chatid = ch.chatid where ch.name = $1 and chm.memberid = $2 and chm2.memberid = $3", ['primary', memberId_b, memberId_a])
                         .then(rows => { 
                             var chatId = 0;                     // default to 0
-                            console.log("Chat ID: " + chatId);
-
                             rows.forEach(row => { 
                                 chatId = row['chatid'];
                             });
+
+                            console.log("Chat ID: " + chatId);
+
 
                             var contact = {
                                 firstname: firstname
@@ -69,6 +70,10 @@ router.post('/', (req, res) => {
                             count = count + 1;
 
                             if (count == numContacts) {
+                                returnContacts.sort(function(a, b) {
+                                    return (a.username.localeCompare(b.username));
+                                });
+                                
                                 res.send({
                                     success: true,
                                     message: returnContacts
