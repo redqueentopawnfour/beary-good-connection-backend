@@ -31,7 +31,7 @@ router.post("/send", (req, res) => {
     JOIN Members
     ON Members.MemberId = Chatmembers.MemberId
     WHERE Members.email=$1 AND Chatmembers.chatId=$2`
-    db.one(verify, [email, chatId]).then(discard => {
+    db.one(verify, [email, chatId]).then(row => {
         console.log("member" + row['memberid'] + "is a member of this chat!");
         //add the message to the database
         let insert = `INSERT INTO Messages (chatId, Message, MemberId) SELECT $1, $2, MemberId FROM Members WHERE Email=$3`
