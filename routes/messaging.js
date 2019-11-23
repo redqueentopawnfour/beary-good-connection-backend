@@ -31,7 +31,7 @@ router.post("/send", (req, res) => {
     JOIN Members
     ON Members.MemberId = Chatmembers.MemberId
     WHERE Members.email=$1 AND Chatmembers.chatId=$2`
-    db.one(verify, [email, chatId]).then(row => {
+    db.one(verify, [email, chatId]).then(discard => {
         console.log("member" + row['memberid'] + "is a member of this chat!");
         //add the message to the database
         let insert = `INSERT INTO Messages (chatId, Message, MemberId) SELECT $1, $2, MemberId FROM Members WHERE Email=$3`
@@ -46,7 +46,7 @@ router.post("/send", (req, res) => {
             db.manyOrNone(selectTokens, chatId)
             .then(rows => {
                 rows.forEach(element => {
-                    msg_functions.sendToIndividual(element['pushtoken'], message, email);
+                    msg_functions.sendToIndividual(element['pushtoken'], message, username);
                 });
                 res.send({
                     success: true
@@ -66,7 +66,7 @@ router.post("/send", (req, res) => {
     }).catch(err => {
         res.send( {
             success: false,
-            message: "this member is not a member of this chat!"
+            message: "You cannot message this member!"
         })
     });
    
