@@ -70,6 +70,10 @@ router.post('/', (req, res) => {
                             count = count + 1;
 
                             if (count == numContacts) {
+                                returnContacts.sort(function(a, b) {
+                                    return (a.username.localeCompare(b.username));
+                                });
+                                
                                 res.send({
                                     success: true,
                                     message: returnContacts
