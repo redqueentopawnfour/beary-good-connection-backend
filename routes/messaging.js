@@ -20,6 +20,7 @@ router.post("/send", (req, res) => {
     let message = req.body['message'];
     let chatId = req.body['chatid'];
 
+
     if(!email || !message || !chatId) {
         res.send({
             success: false,
@@ -31,7 +32,7 @@ router.post("/send", (req, res) => {
     JOIN Members
     ON Members.MemberId = Chatmembers.MemberId
     WHERE Members.email=$1 AND Chatmembers.chatId=$2`
-    db.one(verify, [email, chatId]).then(discard => {
+    db.one(verify, [email, chatId]).then(row => {
         console.log("member" + row['memberid'] + "is a member of this chat!");
         //add the message to the database
         let insert = `INSERT INTO Messages (chatId, Message, MemberId) SELECT $1, $2, MemberId FROM Members WHERE Email=$3`
@@ -45,12 +46,21 @@ router.post("/send", (req, res) => {
             //send a notification of this message to ALL members with registered tokens
             db.manyOrNone(selectTokens, chatId)
             .then(rows => {
-                rows.forEach(element => {
-                    msg_functions.sendToIndividual(element['pushtoken'], message, username);
-                });
-                res.send({
-                    success: true
-                });
+                db.one("select username from Members where email = $1", email)
+                .then((row) => {
+                    var username = row['username'];
+                    rows.forEach(element => {
+                        msg_functions.sendToIndividual(element['pushtoken'], message, username, 'msg');
+                    });
+                    res.send({
+                        success: true
+                    });
+                }).catch(err => {
+                    res.send({
+                        success: false,
+                        error: err
+                    });
+                })
             }).catch(err => {
                 res.send({
                     success: false,
@@ -66,7 +76,7 @@ router.post("/send", (req, res) => {
     }).catch(err => {
         res.send( {
             success: false,
-            message: "You cannot message this member!"
+            message: "this member is not a member of this chat!"
         })
     });
    
