@@ -15,7 +15,7 @@ let msg_functions = require('../utilities/utils').messaging;
 
 //send a message to all users "in" the chat session with chatId
 router.post("/send", (req, res) => {
-    let username = req.body['username'];
+    let username;
     let email = req.body['email'];
     let message = req.body['message'];
     let chatId = req.body['chatid'];
@@ -28,6 +28,16 @@ router.post("/send", (req, res) => {
         });
         return;
     }
+    let getUser = `SELECT Username FROM Members where Email=$1`
+    db.one(getUser, [email]).then(row=> {
+        username = row['username'];
+    }).catch(err => {
+        res.send( {
+            success: false,
+            error: err,
+            message: "Could not find your username!"
+        })
+    });
     let verify = `SELECT * FROM Chatmembers 
     JOIN Members
     ON Members.MemberId = Chatmembers.MemberId
@@ -54,6 +64,7 @@ router.post("/send", (req, res) => {
                     });
                     res.send({
                         success: true
+                        , username: username
                     });
                 }).catch(err => {
                     res.send({
@@ -76,7 +87,8 @@ router.post("/send", (req, res) => {
     }).catch(err => {
         res.send( {
             success: false,
-            message: "this member is not a member of this chat!"
+            message: "You cannot message this member!",
+            error: err
         })
     });
    
