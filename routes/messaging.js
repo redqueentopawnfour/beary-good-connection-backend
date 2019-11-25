@@ -20,6 +20,7 @@ router.post("/send", (req, res) => {
     let message = req.body['message'];
     let chatId = req.body['chatid'];
 
+
     if(!email || !message || !chatId) {
         res.send({
             success: false,
@@ -27,16 +28,6 @@ router.post("/send", (req, res) => {
         });
         return;
     }
-    let getUser = `SELECT Username FROM Members where Email=$1`
-    db.one(getUser, [email]).then(row=> {
-        username = row['username'];
-    }).catch(err => {
-        res.send( {
-            success: false,
-            error: err,
-            message: "Could not find your username!"
-        })
-    });
     let verify = `SELECT * FROM Chatmembers 
     JOIN Members
     ON Members.MemberId = Chatmembers.MemberId
@@ -55,13 +46,22 @@ router.post("/send", (req, res) => {
             //send a notification of this message to ALL members with registered tokens
             db.manyOrNone(selectTokens, chatId)
             .then(rows => {
-                rows.forEach(element => {
-                    msg_functions.sendToIndividual(element['pushtoken'], message, username, chatId);
-                });
-                res.send({
-                    success: true,
-                    username: username
-                });
+                db.one("select username from Members where email = $1", email)
+                .then((row) => {
+                    var username = row['username'];
+                    rows.forEach(element => {
+                        msg_functions.sendToIndividual(element['pushtoken'], message, username, chatId, 'msg');
+                    });
+                    res.send({
+                        success: true
+                        , username: username
+                    });
+                }).catch(err => {
+                    res.send({
+                        success: false,
+                        error: err
+                    });
+                })
             }).catch(err => {
                 res.send({
                     success: false,
