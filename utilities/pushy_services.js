@@ -33,7 +33,7 @@ function sendToTopic(topic, msg, from) {
 
 
 //use to send message to a specific client by the token
-function sendToIndividual(token, msg, from, chatId, type) {
+function sendToIndividual(token, msg, from, type, chatId) {
 
 console.log("Send to individual");
 
