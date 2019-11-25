@@ -5,11 +5,12 @@ var pushyAPI = new Pushy(process.env.PUSHY_API_KEY);
 
 
 //use to send message to a specific client by the token
-function sendToIndividual(token, msg, from) {
+function sendToIndividual(token, msg, from, chatid) {
 
     //build the message for FCM to send
     var data = {
         "type": "msg",
+        "chatid": chatid,
         "sender": from,
         "message": msg,
     };

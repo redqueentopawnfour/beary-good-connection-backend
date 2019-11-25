@@ -56,7 +56,7 @@ router.post("/send", (req, res) => {
             db.manyOrNone(selectTokens, chatId)
             .then(rows => {
                 rows.forEach(element => {
-                    msg_functions.sendToIndividual(element['pushtoken'], message, username);
+                    msg_functions.sendToIndividual(element['pushtoken'], message, username, chatId);
                 });
                 res.send({
                     success: true,
@@ -85,18 +85,19 @@ router.post("/send", (req, res) => {
 });
 
 
-router.post("/getAll", (req, res) => {
-    let chatId = req.body['chatId'];
-    
+router.get("/getAll", (req, res) => {
+    let chatId = req.headers['chatid'];
+    console.log(chatId);
     let query = `SELECT Members.Username, Messages.Message,
      to_char(Messages.Timestamp AT TIME ZONE 'PDT', 'YYYY-MM-DD HH24:MI:SS.US') AS Timestamp
      FROM Messages
      INNER JOIN Members ON Messages.MemberId=Members.MemberId
      WHERE ChatId=$1
-     ORDER BY Timestamp DESC`
+     ORDER BY Timestamp ASC`
     db.manyOrNone(query, [chatId])
     .then((rows) => {
         res.send({
+            success: true,
             messages: rows
         })
     }).catch((err) => {
