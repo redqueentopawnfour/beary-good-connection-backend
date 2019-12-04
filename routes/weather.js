@@ -36,7 +36,7 @@ router.get("/weatherParams", (req, res) => {
         });
     });
 });
-/*
+
 router.get("/weatherForecast", (req, res) => { 
   const {lat, lon} = req.query;
   //const options = new URL('https://api.openweathermap.org/data/2.5/weather?lat={37.39}&lon={122.33}&APPID=256b3fac9d8ec8ce35e6be9487360e9c');
@@ -55,6 +55,6 @@ router.get("/weatherForecast", (req, res) => {
   });
 });
 
-*/
+
 
 module.exports = router;
