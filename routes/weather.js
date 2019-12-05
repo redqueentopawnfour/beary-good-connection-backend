@@ -61,10 +61,16 @@ router.get("/weatherForecast", (req, res) => {
 
 router.post("/addlocation", (req, res) => { 
   res.type("application/json");
+    
+  var username = req.body['username'];
+  var memberid;
+  var lat = req.body['lat'];
+  var long = req.body['long'];
 
-    var memberid = req.body['memberid'];
-    var lat = req.body['lat'];
-    var long = req.body['long'];
+  db.one("SELECT memberid FROM MEMBERS WHERE username = $1", username)
+  .then(row => { 
+    memberid = row['memberid'];
+    console.log("memberid: " + memberid);
 
     db.none("INSERT INTO locations(memberid, lat, long) VALUES ($1, $2, $3)", [memberid, lat, long])
     .then(() => {
@@ -78,17 +84,27 @@ router.post("/addlocation", (req, res) => {
         res.send({
             success: false,
             error: err
-        });
+        });        
     });
+  })
+  .catch((err) => {
+      console.log("No member ID found for sender.");
+  });
 });
 
 
 router.post("/removelocation", (req, res) => { 
   res.type("application/json");
 
-    var memberid = req.body['memberid'];
-    var lat = req.body['lat'];
-    var long = req.body['long'];
+  var username = req.body['username'];
+  var memberid;
+  var lat = req.body['lat'];
+  var long = req.body['long'];
+
+  db.one("SELECT memberid FROM MEMBERS WHERE username = $1", username)
+  .then(row => { 
+    memberid = row['memberid'];
+    console.log("memberid: " + memberid);
 
     db.none("DELETE FROM locations WHERE lat = $1 AND long = $2 AND memberid = $3", [lat, long, memberid])
     .then(() => {
@@ -104,27 +120,31 @@ router.post("/removelocation", (req, res) => {
             error: err
         });
     });
+  })
+  .catch((err) => {
+      console.log("No member ID found for sender.");
+  });
 });
 
 
 router.get("/getlocations", (req, res) => { 
   res.type("application/json");
 
-    db.manyOrNone("select memberid, lat, long from locations")
-    .then(rows => {
-      console.log(rows);
+  db.manyOrNone("select memberid, lat, long from locations")
+  .then(rows => {
+    console.log(rows);
+    res.send({
+      success: true,
+      msg: rows
+  });
+  }).catch((err) => {
+      //log the error
+      console.log(err);
       res.send({
-        success: true,
-        msg: rows
-    });
-    }).catch((err) => {
-        //log the error
-        console.log(err);
-        res.send({
-            success: false,
-            error: err
-        });
-    });
+          success: false,
+          error: err
+      });
+  });
 });
 
 
