@@ -58,7 +58,7 @@ router.get("/weatherForecast", (req, res) => {
   });
 });
 
-router.get("/getCoordinatesFromZipcode", (req, res) => {
+router.get("/zipCode", (req, res) => {
   const {zip} = req.query;
   const options = new URL(`https://www.zipcodeapi.com/rest/Lv1Ndnqf4AJ0oLeiKNnIRyVKfg1YBZ4lBbs6Z1e5h8iU80LmNF6tFD1vkvEXea0T/info.json/${zip}/degrees`);
   http.get(options, (resp) => {
