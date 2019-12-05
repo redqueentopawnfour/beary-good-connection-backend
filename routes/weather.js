@@ -58,14 +58,25 @@ router.get("/weatherForecast", (req, res) => {
   });
 });
 
+router.get("/zipCode", (req, res) => {
+  const {zip} = req.query;
+  const options = new URL(`https://www.zipcodeapi.com/rest/Lv1Ndnqf4AJ0oLeiKNnIRyVKfg1YBZ4lBbs6Z1e5h8iU80LmNF6tFD1vkvEXea0T/info.json/${zip}/degrees`);
+  http.get(options, (resp) => {
+      let responseString = '';
+      resp.on('data', function(data) {
+        responseString += data;
+      });
+      resp.on('end', function() {
+        res.send(responseString);
+        res.end();
+      });
+  });
+});
 
-router.post("/addlocation", (req, res) => { 
-  res.type("application/json");
-    
-  var username = req.body['username'];
+
+router.get("/addlocation", (req, res) => { 
+  const {username, lat, long} = req.query;
   var memberid;
-  var lat = req.body['lat'];
-  var long = req.body['long'];
 
   db.one("SELECT memberid FROM MEMBERS WHERE username = $1", username)
   .then(row => { 
@@ -88,18 +99,14 @@ router.post("/addlocation", (req, res) => {
     });
   })
   .catch((err) => {
-      console.log("No member ID found for sender.");
+      console.log(err);
   });
 });
 
 
-router.post("/removelocation", (req, res) => { 
-  res.type("application/json");
-
-  var username = req.body['username'];
+router.get("/removelocation", (req, res) => { 
+  const {username, lat, long} = req.query;
   var memberid;
-  var lat = req.body['lat'];
-  var long = req.body['long'];
 
   db.one("SELECT memberid FROM MEMBERS WHERE username = $1", username)
   .then(row => { 
