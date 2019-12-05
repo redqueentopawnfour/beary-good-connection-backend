@@ -134,7 +134,7 @@ router.post("/creategroup", (req, res) => {
         db.none(insertChatMember, [row['chatid'], username]).then(() => {
             res.send({
                 success: true,
-                chatid: row
+                chatid: row['chatid']
             })
         }).catch((err) => {
             res.send({
