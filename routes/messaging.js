@@ -15,7 +15,6 @@ let msg_functions = require('../utilities/utils').messaging;
 
 //send a message to all users "in" the chat session with chatId
 router.post("/send", (req, res) => {
-    let username;
     let email = req.body['email'];
     let message = req.body['message'];
     let chatId = req.body['chatid'];
@@ -43,7 +42,6 @@ router.post("/send", (req, res) => {
             JOIN chatmembers
             on members.memberid = chatmembers.memberid
             WHERE chatmembers.chatid=$1`
-            //send a notification of this message to ALL members with registered tokens
             db.manyOrNone(selectTokens, chatId)
             .then(rows => {
                 db.one("select username from Members where email = $1", email)
@@ -127,11 +125,11 @@ router.get("/getgroupchats", (req, res) => {
 
 router.post("/creategroup", (req, res) => {
     let name = req.body['name'];
-    let username = req.body['username'];
+    let email = req.body['email'];
     db.one("INSERT INTO Chats (name) VALUES ($1) RETURNING chatid", [name]).then((row) => {
         let insertChatMember = `INSERT INTO Chatmembers (chatid, memberid) 
-        SELECT $1, Memberid FROM Members WHERE Username=$2`
-        db.none(insertChatMember, [row['chatid'], username]).then(() => {
+        SELECT $1, Memberid FROM Members WHERE Email=$2`
+        db.none(insertChatMember, [row['chatid'], email]).then(() => {
             res.send({
                 success: true,
                 chatid: row['chatid']
