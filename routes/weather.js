@@ -5,6 +5,9 @@ var router = express.Router();
 //Https required
 const http = require('https');
 
+let db = require('../utilities/utils').db;
+
+
 router.get('/', (req, res) => { 
     const options = new URL('https://api.openweathermap.org/data/2.5/weather?q=Seattle,us$units=imperial&APPID=256b3fac9d8ec8ce35e6be9487360e9c');
     //const options = new URL('https://api.weatherbit.io/v2.0/current?city=Seattle,WA&key=f991b0a6c72941ecb4103f79eee8a9f2')
@@ -54,6 +57,76 @@ router.get("/weatherForecast", (req, res) => {
       });
   });
 });
+
+
+router.post("/addlocation", (req, res) => { 
+  res.type("application/json");
+
+    var memberid = req.body['memberid'];
+    var lat = req.body['lat'];
+    var long = req.body['long'];
+
+    db.none("INSERT INTO locations(memberid, lat, long) VALUES ($1, $2, $3)", [memberid, lat, long])
+    .then(() => {
+        res.send({
+            success: true,
+            error: "location successfully saved"
+        });
+    }).catch((err) => {
+        //log the error
+        console.log(err);
+        res.send({
+            success: false,
+            error: err
+        });
+    });
+});
+
+
+router.post("/removelocation", (req, res) => { 
+  res.type("application/json");
+
+    var memberid = req.body['memberid'];
+    var lat = req.body['lat'];
+    var long = req.body['long'];
+
+    db.none("DELETE FROM locations WHERE lat = $1 AND long = $2 AND memberid = $3", [lat, long, memberid])
+    .then(() => {
+      res.send({
+        success: true,
+        error: "location successfully removed"
+    });
+    }).catch((err) => {
+        //log the error
+        console.log(err);
+        res.send({
+            success: false,
+            error: err
+        });
+    });
+});
+
+
+router.get("/getlocations", (req, res) => { 
+  res.type("application/json");
+
+    db.manyOrNone("select memberid, lat, long from locations")
+    .then(rows => {
+      console.log(rows);
+      res.send({
+        success: true,
+        msg: rows
+    });
+    }).catch((err) => {
+        //log the error
+        console.log(err);
+        res.send({
+            success: false,
+            error: err
+        });
+    });
+});
+
 
 
 
