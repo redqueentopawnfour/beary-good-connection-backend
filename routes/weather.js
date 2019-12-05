@@ -57,7 +57,9 @@ router.get("/weatherForecast", (req, res) => {
 
 router.get("/zipCode", (req, res) => {
   const {zip} = req.query;
-  const options = new URL(`https://www.zipcodeapi.com/rest/Lv1Ndnqf4AJ0oLeiKNnIRyVKfg1YBZ4lBbs6Z1e5h8iU80LmNF6tFD1vkvEXea0T/info.json/${zip}/degrees`);
+  // lol what even is this commented out one... use google
+  const options = new URL(`https://maps.googleapis.com/maps/api/geocode/json?address=${zip}&key=AIzaSyCGrS0Pay6qPRO237mEIpvgvP8tRT42zOw`);
+  //const options = new URL(`https://www.zipcodeapi.com/rest/Lv1Ndnqf4AJ0oLeiKNnIRyVKfg1YBZ4lBbs6Z1e5h8iU80LmNF6tFD1vkvEXea0T/info.json/${zip}/degrees`);
   http.get(options, (resp) => {
       let responseString = '';
       resp.on('data', function(data) {
