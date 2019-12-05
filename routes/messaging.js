@@ -127,11 +127,21 @@ router.get("/getgroupchats", (req, res) => {
 
 router.post("/creategroup", (req, res) => {
     let name = req.body['name'];
+    let username = req.body['username'];
     db.one("INSERT INTO Chats (name) VALUES ($1) RETURNING chatid", [name]).then((row) => {
-        res.send({
-            success: true,
-            chatid: row
-        })
+        let insertChatMember = `INSERT INTO Chatmembers (chatid, memberid) 
+        SELECT $1, Memberid FROM Members WHERE Username=$2`
+        db.none(insertChatMember, [row['chatid'], username]).then(() => {
+            res.send({
+                success: true,
+                chatid: row
+            })
+        }).catch((err) => {
+            res.send({
+                success: false,
+                error: err
+            })
+        });
     }).catch((err) => {
         res.send({
             success: false,
@@ -198,7 +208,7 @@ router.post("/removegroupmembers", (req, res) => {
         db.none(deleteStatement).then(() => {
             console.log(usernames + " deleted from chat " + chatId);
             res.send({
-                sucess: true
+                success: true
             });
         }).catch((err) => {
             console.log("fail on delete");
