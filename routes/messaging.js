@@ -97,7 +97,7 @@ router.get("/getAll", (req, res) => {
     .then((rows) => {
         res.send({
             success: true,
-            chats: rows
+            messages: rows
         })
     }).catch((err) => {
         res.send({
@@ -115,7 +115,7 @@ router.get("/getgroupchats", (req, res) => {
     db.manyOrNone(query, username).then((rows) => {
         res.send({
             success: true,
-            messages: rows
+            chats: rows
         })
     }).catch((err) => {
         res.send({
