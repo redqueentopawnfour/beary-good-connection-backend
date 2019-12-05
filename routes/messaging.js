@@ -97,6 +97,24 @@ router.get("/getAll", (req, res) => {
     .then((rows) => {
         res.send({
             success: true,
+            chats: rows
+        })
+    }).catch((err) => {
+        res.send({
+            success: false,
+            error: err
+        })
+    });
+});
+
+router.get("/getgroupchats", (req, res) => {
+    let username = req.headers['username'];
+    let query = `SELECT Chats.Chatid, Chats.Name FROM Chats
+    INNER JOIN ChatMembers on Chats.ChatId=Chatmembers.ChatId
+    WHERE Chatmembers.memberid=(SELECT Memberid FROM Members WHERE Username=$1) and NOT Name='primary'`
+    db.manyOrNone(query, username).then((rows) => {
+        res.send({
+            success: true,
             messages: rows
         })
     }).catch((err) => {
@@ -106,5 +124,97 @@ router.get("/getAll", (req, res) => {
         })
     });
 });
+
+router.post("/creategroup", (req, res) => {
+    let name = req.body['name'];
+    db.one("INSERT INTO Chats (name) VALUES ($1) RETURNING chatid", [name]).then((row) => {
+        res.send({
+            success: true,
+            chatid: row
+        })
+    }).catch((err) => {
+        res.send({
+            success: false,
+            error: err
+        })
+    });
+});
+
+
+function addQuotes(myArrayItem) {
+    return '\'' + myArrayItem + '\'';
+}
+
+router.post("/addgroupmembers", (req, res) => {
+    let usernames = req.body['usernames'];
+    let chatId = req.body['chatid'];
+    let getMemberIds = "SELECT Memberid FROM Members WHERE Username IN"
+    getMemberIds += '(' + usernames.map(addQuotes).join(", ") + ')';
+    db.manyOrNone(getMemberIds, ).then(rows => {
+            let insert = "INSERT INTO ChatMembers (ChatId, Memberid) VALUES"
+            console.log("rows after select" + rows.toString());
+            const valueArray = [];
+            rows.forEach(row => {
+                valueArray.push("(" + chatId + ", " + row['memberid'] + ")");
+            });
+            // console.log(valueArray);
+            insert += valueArray.join(", ");
+            // console.log(insert);
+            db.none(insert).then(() => {
+                console.log(usernames + "added to chat" + chatId);
+                res.send({
+                    success: true
+                });
+            }).catch(err => {
+                res.send({
+                    success: false,
+                    error: err
+                });
+            })
+        })
+    .catch(err => {
+        res.send({
+            success: false,
+            error: err
+        });
+    });
+});
+
+router.post("/removegroupmembers", (req, res) => {
+    
+    let usernames = req.body['usernames'];
+    let chatId = req.body['chatid'];
+    let getMemberIds = "SELECT Memberid FROM Members WHERE Username IN"
+    getMemberIds += '(' + usernames.map(addQuotes).join(", ") + ')';
+    db.manyOrNone(getMemberIds).then(rows => {
+        console.log(rows);
+        let deleteStatement = "DELETE FROM Chatmembers WHERE";
+        const memberArray = [];
+        rows.forEach(row => {
+            memberArray.push("(Chatid=" + chatId + " and Memberid=" + row['memberid'] + ")");
+        });
+        deleteStatement += memberArray.join(" OR ");
+        console.log(deleteStatement);
+        db.none(deleteStatement).then(() => {
+            console.log(usernames + " deleted from chat " + chatId);
+            res.send({
+                sucess: true
+            });
+        }).catch((err) => {
+            console.log("fail on delete");
+            res.send({
+                success: false,
+                error: err
+            })
+        });
+    }).catch((err) => {
+        console.log("fail on select");
+        res.send({
+            success: false,
+            error: err
+        })
+    });
+});
+
 
 module.exports = router;
