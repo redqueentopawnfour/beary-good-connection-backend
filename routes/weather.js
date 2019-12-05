@@ -162,8 +162,9 @@ router.get("/getlocations", (req, res) => {
   .then(row => {
     memberid = row['memberid'];
     console.log("memberid: " + memberid);
-    
-    db.manyOrNone("select memberid, lat, long from locations")
+
+    //db.manyOrNone("select memberid, lat, long from locations")
+    db.manyOrNone("select lat, long from locations where memberid = $1", memberid)
     .then(rows => {
       console.log(rows);
       res.send({
