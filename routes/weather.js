@@ -58,6 +58,21 @@ router.get("/weatherForecast", (req, res) => {
   });
 });
 
+router.get("/getCoordinatesFromZipcode", (req, res) => {
+  const {zip} = req.query;
+  const options = new URL(`https://www.zipcodeapi.com/rest/Lv1Ndnqf4AJ0oLeiKNnIRyVKfg1YBZ4lBbs6Z1e5h8iU80LmNF6tFD1vkvEXea0T/info.json/${zip}/degrees`);
+  http.get(options, (resp) => {
+      let responseString = '';
+      resp.on('data', function(data) {
+        responseString += data;
+      });
+      resp.on('end', function() {
+        res.send(responseString);
+        res.end();
+      });
+  });
+});
+
 
 router.get("/addlocation", (req, res) => { 
   const {username, lat, long} = req.query;
