@@ -93,10 +93,21 @@ router.get("/getAll", (req, res) => {
      ORDER BY Timestamp ASC`
     db.manyOrNone(query, [chatId])
     .then((rows) => {
-        res.send({
-            success: true,
-            messages: rows
-        })
+        let getusers = `SELECT Members.Username FROM Members
+        INNER JOIN Chatmembers  ON 
+        Members.Memberid=Chatmembers.Memberid WHERE Chatid=$1`
+        db.manyOrNone(getusers, chatId).then((names) => {
+            res.send({
+                success: true,
+                messages: rows,
+                usernames: names
+            })
+        }).catch((err) => {
+            res.send({
+                success: false,
+                error: err
+            })
+        });
     }).catch((err) => {
         res.send({
             success: false,
