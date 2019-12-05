@@ -134,15 +134,43 @@ router.get("/removelocation", (req, res) => {
 
 
 router.get("/getlocations", (req, res) => { 
-  res.type("application/json");
+  const {username} = req.query;
+/*
+  db.one("SELECT memberid FROM MEMBERS WHERE username = $1", username)
+  .then(row => { 
+    memberid = row['memberid'];
+    console.log("memberid: " + memberid);
 
-  db.manyOrNone("select memberid, lat, long from locations")
-  .then(rows => {
-    console.log(rows);
-    res.send({
-      success: true,
-      msg: rows
-  });
+    db.none("INSERT INTO locations(memberid, lat, long) VALUES ($1, $2, $3)", [memberid, lat, long])
+    .then(() => {
+        res.send({
+            success: true,
+            error: "location successfully saved"
+        });
+    }).catch((err) => {
+        //log the error
+        console.log(err);
+        res.send({
+            success: false,
+            error: err
+        });        
+    });
+  })
+*/
+  res.type("application/json");
+  db.one("SELECT memberid FROM MEMBERS WHERE username = $1", username)
+  .then(row => {
+    memberid = row['memberid'];
+    console.log("memberid: " + memberid);
+    
+    db.manyOrNone("select memberid, lat, long from locations")
+    .then(rows => {
+      console.log(rows);
+      res.send({
+        success: true,
+        msg: rows
+      });
+    })
   }).catch((err) => {
       //log the error
       console.log(err);
