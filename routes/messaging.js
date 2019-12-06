@@ -243,6 +243,24 @@ function addQuotes(myArrayItem) {
     return '\'' + myArrayItem + '\'';
 }
 
+router.post("/leavegroup", (req, res) => {
+    let username = req.body['username'];
+    let chatId = req.body['chatid'];
+    db.one("SELECT Memberid FROM Members WHERE Username=$1", username).then(row => {
+        db.none("DELETE FROM Chatmembers WHERE chatid=$1 and Memberid=$2",
+        [chatId, row['memberid']]).then(() => {
+            res.send({
+                success: true
+            });
+        });
+    }).catch(err => {
+        res.send({
+            success: false,
+            error: err
+        });
+    });
+});
+
 router.post("/addgroupmembers", (req, res) => {
     let usernames = req.body['usernames'];
     let chatId = req.body['chatid'];
