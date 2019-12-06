@@ -143,7 +143,7 @@ router.get("/getfavorites", (req, res) => {
     });
 });
 
-router.get("/getchatdetails", (req, res) => {
+router.get("/getchatmembers", (req, res) => {
     let chatId = req.headers['chatid'];
     let query = `SELECT Members.Username FROM Members
     INNER JOIN Chatmembers  ON 
