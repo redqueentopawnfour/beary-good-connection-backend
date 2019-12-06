@@ -152,7 +152,8 @@ router.get("/getchatmembers", (req, res) => {
     .then((names) => {
             res.send({
                 success: true,
-                usernames: names
+                usernames: names,
+                chatid: chatId
             })
         }).catch((err) => {
             res.send({
