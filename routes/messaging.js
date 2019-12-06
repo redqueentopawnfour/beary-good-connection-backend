@@ -82,6 +82,85 @@ router.post("/send", (req, res) => {
    
 });
 
+router.post("/addfavorite", (req, res) => {
+    let chatId = req.body['chatid'];
+    let email = req.body['email'];
+    console.log(email);
+    console.log(chatId);
+    let select = `SELECT memberid FROM members WHERE email=$1`
+    db.one(select, email).then(row => {
+        let insert = `INSERT INTO chatfavorites (chatid, memberid) 
+        VALUES($1, $2)`
+        db.none(insert, [chatId, row['memberid']]).then(() => {
+            res.send({
+                success: true
+            });
+        }).catch((err) => {
+            res.send({
+                success: false,
+                error: err
+            })
+        });
+    }).catch((err) => {
+        res.send({
+            success: false,
+            error: err
+        })
+    });
+});
+
+router.get("/getfavorites", (req, res) => {
+    let email = req.headers['email'];
+    let query = `SELECT Chatfavorites.Chatid FROM Chatfavorites
+    INNER JOIN Members ON Members.Memberid=ChatFavorites.Memberid
+    WHERE Members.email = $1`
+    db.manyOrNone(query, email).then(rows => {
+        console.log(rows);
+        let namequery = "SELECT NAME, Chatid FROM CHATS WHERE Chatid IN";
+        const chatIdArray = [];
+        rows.forEach(row => {
+            chatIdArray.push(row['chatid']);
+        });
+        namequery += '(' + chatIdArray.join(', ') + ')';
+        console.log(namequery);
+        db.manyOrNone(namequery).then(chatDetails => {
+            res.send({
+                success: true,
+                details: chatDetails
+            });
+        }).catch((err => {
+            res.send({
+                success: false,
+                error: err
+            });
+        }));
+        
+    }).catch((err) => {
+        res.send({
+            success: false,
+            error: err
+        });
+    });
+});
+
+router.get("/getchatdetails", (req, res) => {
+    let chatId = req.headers['chatid'];
+    let query = `SELECT Members.Username FROM Members
+    INNER JOIN Chatmembers  ON 
+    Members.Memberid=Chatmembers.Memberid WHERE Chatid=$1`
+    db.manyOrNone(query, [chatId])
+    .then((names) => {
+            res.send({
+                success: true,
+                usernames: names
+            })
+        }).catch((err) => {
+            res.send({
+                success: false,
+                error: err
+            })
+        });
+});
 
 router.get("/getAll", (req, res) => {
     let chatId = req.headers['chatid'];
@@ -199,41 +278,7 @@ router.post("/addgroupmembers", (req, res) => {
     });
 });
 
-router.post("/removegroupmembers", (req, res) => {
-    
-    let usernames = req.body['usernames'];
-    let chatId = req.body['chatid'];
-    let getMemberIds = "SELECT Memberid FROM Members WHERE Username IN"
-    getMemberIds += '(' + usernames.map(addQuotes).join(", ") + ')';
-    db.manyOrNone(getMemberIds).then(rows => {
-        console.log(rows);
-        let deleteStatement = "DELETE FROM Chatmembers WHERE";
-        const memberArray = [];
-        rows.forEach(row => {
-            memberArray.push("(Chatid=" + chatId + " and Memberid=" + row['memberid'] + ")");
-        });
-        deleteStatement += memberArray.join(" OR ");
-        console.log(deleteStatement);
-        db.none(deleteStatement).then(() => {
-            console.log(usernames + " deleted from chat " + chatId);
-            res.send({
-                success: true
-            });
-        }).catch((err) => {
-            console.log("fail on delete");
-            res.send({
-                success: false,
-                error: err
-            })
-        });
-    }).catch((err) => {
-        console.log("fail on select");
-        res.send({
-            success: false,
-            error: err
-        })
-    });
-});
+
 
 
 module.exports = router;
