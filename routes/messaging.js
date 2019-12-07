@@ -294,6 +294,32 @@ router.post("/removefavorite", (req, res) => {
     });
 });
 
+router.get("/checkmember", (req, res) => {
+    let chatId = req.headers['chatid'];
+    let email = req.headers['email'];
+    let chatName = req.headers['chatname'];
+    db.one("SELECT Memberid FROM Members WHERE email=$1", email).then((row) => {
+        db.one("SELECT * FROM Chatmembers WHERE Chatid=$1 and Memberid=$2",
+        [chatId, email]).then(row => {
+            res.send({
+                chatname: chatName,
+                chatid: chatId,
+                success: true
+            });
+        }).catch(err => {
+            res.send({
+                success: false,
+                error: err
+            });
+        });
+    }).catch(err => {
+        res.send({
+            success: false,
+            error: err
+        });
+    });
+});
+
 router.post("/addgroupmembers", (req, res) => {
     let usernames = req.body['usernames'];
     let chatId = req.body['chatid'];
