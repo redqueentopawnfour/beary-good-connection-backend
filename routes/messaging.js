@@ -254,7 +254,7 @@ router.post("/leavegroup", (req, res) => {
         db.none("DELETE FROM Chatmembers WHERE chatid=$1 and Memberid=$2",
         [chatId, row['memberid']]).then(() => {
             db.none("DELETE FROM Chatfavorites WHERE chatid=$1 and Memberid=$2",
-            [chatId], row['memberid']).then(() => {
+            [chatId, row['memberid']]).then(() => {
                 res.send({
                     success: true
                 });
