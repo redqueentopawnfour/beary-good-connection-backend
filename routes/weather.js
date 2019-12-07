@@ -55,6 +55,21 @@ router.get("/weatherForecast", (req, res) => {
   });
 });
 
+router.get("/weatherForecast24", (req, res) => { 
+  const {lat, lon} = req.query;
+  const options = new URL(`https://api.weatherbit.io/v2.0/forecast/hourly?lat=${lat}&lon=${lon}&units=I&hours=24&key=f991b0a6c72941ecb4103f79eee8a9f2`);
+  http.get(options, (resp) => {
+      let responseString = '';
+      resp.on('data', function(data) {
+        responseString += data;
+      });
+      resp.on('end', function() {
+        res.send(responseString);
+        res.end();
+      });
+  });
+});
+
 router.get("/zipCode", (req, res) => {
   const {zip} = req.query;
   // lol what even is this commented out one... use google
@@ -135,28 +150,7 @@ router.get("/removelocation", (req, res) => {
 
 router.get("/getlocations", (req, res) => { 
   const {username} = req.query;
-/*
-  db.one("SELECT memberid FROM MEMBERS WHERE username = $1", username)
-  .then(row => { 
-    memberid = row['memberid'];
-    console.log("memberid: " + memberid);
 
-    db.none("INSERT INTO locations(memberid, lat, long) VALUES ($1, $2, $3)", [memberid, lat, long])
-    .then(() => {
-        res.send({
-            success: true,
-            error: "location successfully saved"
-        });
-    }).catch((err) => {
-        //log the error
-        console.log(err);
-        res.send({
-            success: false,
-            error: err
-        });        
-    });
-  })
-*/
   res.type("application/json");
   db.one("SELECT memberid FROM MEMBERS WHERE username = $1", username)
   .then(row => {
