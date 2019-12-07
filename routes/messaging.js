@@ -266,7 +266,7 @@ router.post("/leavegroup", (req, res) => {
 });
 
 router.post("/removefavorite", (req, res) => {
-    let uemail = req.body['email'];
+    let email = req.body['email'];
     let chatId = req.body['chatid'];
     console.log("before select " + email);
     console.log("before select " + chatId);
@@ -274,7 +274,8 @@ router.post("/removefavorite", (req, res) => {
         db.none("DELETE FROM Chatfavorites WHERE chatid=$1 and Memberid=$2",
         [chatId, row['memberid']]).then(() => {
             res.send({
-                success: true
+                success: true,
+                chatid:chatId
             });
         });
     }).catch(err => {
