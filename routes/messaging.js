@@ -300,7 +300,7 @@ router.get("/checkmember", (req, res) => {
     let chatName = req.headers['chatname'];
     db.one("SELECT Memberid FROM Members WHERE email=$1", email).then((row) => {
         db.one("SELECT * FROM Chatmembers WHERE Chatid=$1 and Memberid=$2",
-        [chatId, email]).then(row => {
+        [chatId, row['memberid']]).then(row => {
             res.send({
                 chatname: chatName,
                 chatid: chatId,
