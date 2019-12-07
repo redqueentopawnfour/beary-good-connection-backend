@@ -250,7 +250,6 @@ router.post("/leavegroup", (req, res) => {
     console.log("before select " + username);
     console.log("before select " + chatId);
     db.one("SELECT Memberid FROM Members WHERE Username=$1", username).then(row => {
-        console.log("after select " + row['memberid'])
         db.none("DELETE FROM Chatmembers WHERE chatid=$1 and Memberid=$2",
         [chatId, row['memberid']]).then(() => {
                 res.send({
@@ -262,7 +261,6 @@ router.post("/leavegroup", (req, res) => {
                     error: err
                 });
             });
-        });
     }).catch(err => {
         res.send({
             success: false,
